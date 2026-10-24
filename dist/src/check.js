@@ -5,7 +5,7 @@ import { evaluate } from "./decide.js";
 import { parsePolicy } from "./policy.js";
 import { writeRecord } from "./record.js";
 import { POLICY_PATH, TOOL_VERSION } from "./version.js";
-export function checkLocal(start) {
+export function checkLocal(start, options = {}) {
     const root = repositoryRoot(start);
     const policyFile = join(root, POLICY_PATH);
     if (!existsSync(policyFile)) {
@@ -13,7 +13,9 @@ export function checkLocal(start) {
         return 1;
     }
     if (command(root, "git", ["status", "--porcelain"])) {
-        process.stdout.write("Commit your changes, then run merge-gate check again.\n");
+        if (options.quietWhenClear)
+            return 0;
+        process.stdout.write("Commit your changes, then run npx github:OmritRenders/merge-gate again.\n");
         return 1;
     }
     let policy;
@@ -31,7 +33,8 @@ export function checkLocal(start) {
         return 1;
     }
     if (head === base) {
-        process.stdout.write("Merge gate: nothing to check.\n");
+        if (!options.quietWhenClear)
+            process.stdout.write("Merge gate: nothing to check.\n");
         return 0;
     }
     const files = parseNumstat(command(root, "git", ["diff", "--numstat", "-M", `${base}...${head}`]) ?? "");

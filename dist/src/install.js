@@ -12,7 +12,7 @@ if (entry.endsWith("/install.js") || entry.endsWith("/install.ts")) {
     if (request === "check")
         process.exit(checkLocal(process.cwd()));
     if (request && request !== "install") {
-        process.stderr.write("Run: npx github:OmritRenders/merge-gate\nOr: npx github:OmritRenders/merge-gate check\n");
+        process.stderr.write("Run: npx github:OmritRenders/merge-gate\n");
         process.exit(1);
     }
     process.exit(install(process.cwd()));
@@ -45,10 +45,9 @@ function install(start) {
     }
     for (const file of skipped)
         process.stdout.write(`Left ${file} unchanged.\n`);
-    process.stdout.write("A coding agent should run: npx github:OmritRenders/merge-gate check\n");
     if (!repo)
         process.stdout.write("Open a pull request so these files reach the default branch.\n");
-    return 0;
+    return checkLocal(root, { quietWhenClear: true });
 }
 function repositoryRoot(start) {
     return command("git", ["rev-parse", "--show-toplevel"], start) ?? start;
@@ -137,6 +136,11 @@ function writeAgentFile(root, added, left) {
     }
     const current = readFileSync(path, "utf8");
     if (current.includes("npx github:OmritRenders/merge-gate check")) {
+        writeFileSync(path, current.replaceAll("npx github:OmritRenders/merge-gate check", "npx github:OmritRenders/merge-gate"), "utf8");
+        added.push("AGENTS.md");
+        return;
+    }
+    if (current.includes("npx github:OmritRenders/merge-gate")) {
         left.push("AGENTS.md");
         return;
     }
@@ -146,7 +150,7 @@ function writeAgentFile(root, added, left) {
 function agentInstructions() {
     return `# Merge gate
 
-Before you open a pull request, run \`npx github:OmritRenders/merge-gate check\` and fix every problem it reports. Keep each commit within the limit in \`.github/merge-gate.yml\`. A commit that changes application code includes a test file. Config, docs, infrastructure, and lockfiles do not need a new test file. Do not add the \`merge-gate-waive\` label.
+Before you open a pull request, run \`npx github:OmritRenders/merge-gate\` and fix every problem it reports. Keep each commit within the limit in \`.github/merge-gate.yml\`. A commit that changes application code includes a test file. Config, docs, infrastructure, and lockfiles do not need a new test file. Do not add the \`merge-gate-waive\` label.
 `;
 }
 function writeNew(root, path, text, added, left) {

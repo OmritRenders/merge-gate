@@ -7,7 +7,7 @@ import { parsePolicy } from "./policy.js"
 import { writeRecord } from "./record.js"
 import { POLICY_PATH, TOOL_VERSION } from "./version.js"
 
-export function checkLocal(start: string): number {
+export function checkLocal(start: string, options: { quietWhenClear?: boolean } = {}): number {
   const root = repositoryRoot(start)
   const policyFile = join(root, POLICY_PATH)
   if (!existsSync(policyFile)) {
@@ -15,7 +15,8 @@ export function checkLocal(start: string): number {
     return 1
   }
   if (command(root, "git", ["status", "--porcelain"])) {
-    process.stdout.write("Commit your changes, then run merge-gate check again.\n")
+    if (options.quietWhenClear) return 0
+    process.stdout.write("Commit your changes, then run npx github:OmritRenders/merge-gate again.\n")
     return 1
   }
 
@@ -34,7 +35,7 @@ export function checkLocal(start: string): number {
     return 1
   }
   if (head === base) {
-    process.stdout.write("Merge gate: nothing to check.\n")
+    if (!options.quietWhenClear) process.stdout.write("Merge gate: nothing to check.\n")
     return 0
   }
 

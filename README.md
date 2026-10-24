@@ -12,15 +12,9 @@ From the repository, run:
 npx github:OmritRenders/merge-gate
 ```
 
-Use that same command in a terminal, Cursor, Claude, Copilot, or any other coding agent. It adds the rule, an owner file when the repository does not have one, the workflow, and `AGENTS.md`. When this computer is already signed in to GitHub, it also creates the `merge-gate-waive` label and requires the `test` and `merge-gate` checks.
+Use that one command in a terminal, Cursor, Claude, Copilot, or any other coding agent. It adds the rule, an owner file when the repository does not have one, the workflow, and instructions for the coding agent. When this computer is already signed in to GitHub, it also creates the `merge-gate-waive` label and requires the `test` and `merge-gate` checks.
 
-`AGENTS.md` tells the coding agent to run this before it opens a pull request:
-
-```bash
-npx github:OmritRenders/merge-gate check
-```
-
-The agent has to fix what that command reports. GitHub runs the same rules again on the pull request, so a later commit cannot sneak past them.
+The coding agent uses that same command before it opens a pull request and fixes what it reports. GitHub runs the same rules again on the pull request.
 
 Open a pull request if those files are not on the default branch yet. If the test command is wrong, change the one `run` line in `.github/workflows/review.yml`.
 
