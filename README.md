@@ -2,7 +2,7 @@
 
 Stops a pull request that is too big, has a file nobody owns, or does not have a passing test. It works for application code, services, mobile, and the config and infrastructure around them.
 
-A big pull request can still go through when every commit in it stays within the limit. Each file needs an owner. A commit that changes application code also needs a test file. Config, docs, infrastructure, lockfiles, and generated files do not need a new test file, and lockfiles do not count toward the size limit. The project's test job still has to pass.
+A big pull request can still go through when every commit in it stays within the limit. Each file needs an owner. Application code for two different owners cannot share one pull request. A commit that changes application code also needs a test file. Config, docs, infrastructure, lockfiles, and generated files do not need a new test file, and lockfiles do not count toward the size limit. The project's test job still has to pass.
 
 ## Install
 

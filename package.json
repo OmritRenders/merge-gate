@@ -1,6 +1,6 @@
 {
   "name": "merge-gate",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Block an oversized GitHub pull request until each commit has an owner and a passing test.",
   "type": "module",
   "bin": {

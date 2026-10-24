@@ -14,6 +14,17 @@ export function evaluate(snapshot, policy, version, review = {}) {
         reasons.push(waiver.problem);
     const ownership = resolveOwners(snapshot);
     reasons.push(...ownership.reasons);
+    if (snapshot.codeownersText) {
+        const mixed = ownerAreas(snapshot.files, snapshot.codeownersText);
+        if (mixed.length > 1) {
+            reasons.push(`This pull request mixes owners: ${mixed.slice(0, 4).map((area) => `${area.owners} (${area.example})`).join(", ")}.`);
+            for (const area of mixed.slice(0, 4)) {
+                if (ownership.annotations.length >= 20)
+                    break;
+                ownership.annotations.push({ path: area.example, message: `This file is owned by ${area.owners}. Split it from the other owner areas.` });
+            }
+        }
+    }
     const slices = reviewCommits(snapshot, policy, linesChanged, Boolean(waiver.applied), ownership.missing, reasons);
     if (ownership.sourceChanged && !ownership.testFileChanged) {
         reasons.push("Source files changed and no test file changed.");
@@ -118,6 +129,12 @@ function reviewCommits(snapshot, policy, linesChanged, waived, ownedMissing, rea
         if (split && commit.files.some((file) => isSource(file.path)) && !commit.files.some((file) => isTestPath(file.path))) {
             reasons.push(`Commit ${short} changes source and no test file.`);
         }
+        if (codeowners !== null) {
+            const mixed = ownerAreas(commit.files, codeowners);
+            if (mixed.length > 1) {
+                reasons.push(`Commit ${short} mixes owners: ${mixed.slice(0, 4).map((area) => area.owners).join(", ")}.`);
+            }
+        }
         if (split && codeowners !== null) {
             const missing = commit.files.filter((file) => !already.has(file.path) && ownersFor(file.path, codeowners).length === 0);
             if (missing.length > 0) {
@@ -144,6 +161,20 @@ function changedLines(files) {
             throw new Error("The change is too large to measure safely.");
         return next;
     }, 0);
+}
+function ownerAreas(files, codeowners) {
+    const areas = new Map();
+    for (const file of files) {
+        if (!isSource(file.path))
+            continue;
+        const owners = ownersFor(file.path, codeowners).slice().sort();
+        if (owners.length === 0)
+            continue;
+        const key = owners.join(", ");
+        if (!areas.has(key))
+            areas.set(key, file.path);
+    }
+    return [...areas.entries()].map(([owners, example]) => ({ owners, example }));
 }
 function isRepoPath(filePath) {
     if (filePath === "" || filePath.startsWith("/") || filePath.includes("\\") || filePath.includes("\0"))
