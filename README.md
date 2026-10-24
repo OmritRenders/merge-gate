@@ -10,6 +10,8 @@ A size checker looks at the finished pull request. The author can often click pa
 
 GitHub CODEOWNERS asks the named people to review. The mixed pull request can still merge. Merge Gate blocks application code for two owner groups in one pull request, then lists the files that belong in each smaller one.
 
+A coding agent can say "put the billing files in one pull request and the login files in another," and someone can still merge the mixed one. The agent can also guess the wrong split, because it does not have to follow the company's owner file. Merge Gate keeps that pull request closed. The list it prints comes from the owner file, so the next pull requests match the real owners.
+
 A required test job means the tests that ran have passed. Merge Gate also blocks application code that came in with no test file. Config, docs, infrastructure, lockfiles, and generated files stay exempt.
 
 Graphite can stack the split pull requests, and a review bot can suggest the split. The original pull request stays mergeable. Merge Gate is the required check, so that pull request stays blocked until the split is real.
