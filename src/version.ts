@@ -1,5 +1,5 @@
 export const TOOL_NAME = "merge-gate"
-export const TOOL_VERSION = "1.2.0"
+export const TOOL_VERSION = "1.3.0"
 export const SCHEMA_VERSION = 2
 export const RULE_VERSION = 1
 export const DEFAULT_THRESHOLD = 400

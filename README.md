@@ -4,29 +4,24 @@ Stops a pull request that is too big, has a file nobody owns, or does not have a
 
 A big pull request can still go through when every commit in it stays within the limit. Each commit needs an owner for its files. A commit that changes code also needs a test file. The test job still has to pass.
 
-## Add it
+## Install
 
-Do this on the default branch.
+From the repository, run:
 
-1. Create `.github/merge-gate.yml`:
-
-```yaml
-ruleVersion: 1
-threshold: 400
-waiverLabel: merge-gate-waive
-testCheck: test
+```bash
+npx github:OmritRenders/merge-gate
 ```
 
-`threshold` is how many added and deleted lines one commit may contain. `testCheck` is the name of the test job below. If you rename that job, change `testCheck` to the same name.
+Use that same command in a terminal, Cursor, Claude, Copilot, or any other coding agent. It adds the rule, an owner file when the repository does not have one, the workflow, and `AGENTS.md`. When this computer is already signed in to GitHub, it also creates the `merge-gate-waive` label and requires the `test` and `merge-gate` checks.
 
-2. Create `.github/CODEOWNERS` if the repository does not have one yet. Put your GitHub name here:
+`AGENTS.md` tells the coding agent to run this before it opens a pull request:
 
+```bash
+npx github:OmritRenders/merge-gate check
 ```
-* @your-github-name
-```
 
-3. Create `.github/workflows/review.yml`. Same file as `example/workflow.yml`. Change `npm test` to the test command this repository already uses.
+The agent has to fix what that command reports. GitHub runs the same rules again on the pull request, so a later commit cannot sneak past them.
 
-4. On GitHub, open the repository **Settings**, then **Branches**, then add a rule for the default branch. Require the status checks named `test` and `merge-gate`. Also create a label named `merge-gate-waive`.
+Open a pull request if those files are not on the default branch yet. If the test command is wrong, change the one `run` line in `.github/workflows/review.yml`.
 
-That label skips the size limit only. The pull request author cannot add it, and a bot cannot add it either. Owners and tests are still required.
+`merge-gate-waive` skips the size limit only. The pull request author cannot add it, and a bot cannot add it either.

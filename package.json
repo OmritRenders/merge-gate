@@ -1,9 +1,15 @@
 {
   "name": "merge-gate",
-  "version": "1.2.0",
-  "private": true,
+  "version": "1.3.0",
   "description": "Block an oversized GitHub pull request until each commit has an owner and a passing test.",
   "type": "module",
+  "bin": {
+    "merge-gate": "./dist/src/install.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OmritRenders/merge-gate.git"
+  },
   "engines": {
     "node": ">=20"
   },

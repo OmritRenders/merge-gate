@@ -29,4 +29,4 @@ jobs:
       checks: read
       statuses: read
     steps:
-      - uses: OmritRenders/merge-gate@v1.2.0
+      - uses: OmritRenders/merge-gate@v1.3.0
