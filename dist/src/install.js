@@ -4,7 +4,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { join } from "node:path";
 import { checkLocal } from "./check.js";
 import { DEFAULT_THRESHOLD, DEFAULT_WAIVER_LABEL, POLICY_PATH, RULE_VERSION } from "./version.js";
-const ACTION = "OmritRenders/merge-gate@v1.5.0";
+const ACTION = "OmritRenders/merge-gate@v1.6.0";
 const CHECKS = ["test", "merge-gate"];
 const entry = (process.argv[1] ?? "").replaceAll("\\", "/");
 if (entry.endsWith("/install.js") || entry.endsWith("/install.ts")) {
@@ -150,7 +150,7 @@ function writeAgentFile(root, added, left) {
 function agentInstructions() {
     return `# Merge gate
 
-Before you open a pull request, run \`npx github:OmritRenders/merge-gate\` and fix every problem it reports. Keep each commit within the limit in \`.github/merge-gate.yml\`. Keep a pull request to one owner area. A commit that changes application code includes a test file. Config, docs, infrastructure, and lockfiles do not need a new test file. Do not add the \`merge-gate-waive\` label.
+Before you open a pull request, run \`npx github:OmritRenders/merge-gate\` and fix every problem it reports. When the report lists owners, open one pull request per owner and include only the files it names. When it names the largest files, move those into their own commits. Keep each commit within the limit in \`.github/merge-gate.yml\`. A commit that changes application code includes a test file. Config, docs, infrastructure, and lockfiles do not need a new test file. Do not add the \`merge-gate-waive\` label.
 `;
 }
 function writeNew(root, path, text, added, left) {

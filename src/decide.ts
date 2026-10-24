@@ -89,17 +89,19 @@ export function evaluate(snapshot: Snapshot, policy: Policy, version: string, re
   if (snapshot.codeownersText) {
     const mixed = ownerAreas(snapshot.files, snapshot.codeownersText)
     if (mixed.length > 1) {
-      reasons.push(`This pull request mixes owners: ${mixed.slice(0, 4).map((area) => `${area.owners} (${area.example})`).join(", ")}.`)
+      reasons.push(splitPlan(snapshot.files, snapshot.codeownersText, mixed))
       for (const area of mixed.slice(0, 4)) {
-        if (ownership.annotations.length >= 20) break
-        ownership.annotations.push({ path: area.example, message: `This file is owned by ${area.owners}. Split it from the other owner areas.` })
+        const example = area.files[0]
+        if (!example || ownership.annotations.length >= 20) break
+        ownership.annotations.push({ path: example, message: `Owned by ${area.owners}. Keep this file with that pull request only.` })
       }
     }
   }
-  const slices = reviewCommits(snapshot, policy, linesChanged, Boolean(waiver.applied), ownership.missing, reasons)
+  const slices = reviewCommits(snapshot, policy, linesChanged, Boolean(waiver.applied), ownership.missing, reasons, snapshot.codeownersText !== null && ownerAreas(snapshot.files, snapshot.codeownersText).length > 1)
 
   if (ownership.sourceChanged && !ownership.testFileChanged) {
-    reasons.push("Source files changed and no test file changed.")
+    const source = snapshot.files.find((file) => isSource(file.path))
+    reasons.push(`Source files changed and no test file changed.${source ? ` Add a test for ${source.path}.` : ""}`)
   }
 
   const testCheck = concludeTest(snapshot.checks, policy.testCheck)
@@ -166,6 +168,7 @@ function reviewCommits(
   waived: boolean,
   ownedMissing: string[],
   reasons: string[],
+  planned: boolean,
 ): { checked: boolean; measured: { sha: string; lines: number }[] } {
   const commits = snapshot.commits === undefined ? null : snapshot.commits
   if (commits === null) {
@@ -206,16 +209,17 @@ function reviewCommits(
     const lines = changedLines(commit.files)
     measured.push({ sha: commit.sha, lines })
     if (!waived && lines > policy.threshold) {
-      reasons.push(`Commit ${short} changes ${lines} lines. Limit is ${policy.threshold}.`)
+      reasons.push(`Commit ${short} changes ${lines} lines. Limit is ${policy.threshold}.${largestFiles(commit.files)}`)
       sizeBroken = true
     }
     if (split && commit.files.some((file) => isSource(file.path)) && !commit.files.some((file) => isTestPath(file.path))) {
-      reasons.push(`Commit ${short} changes source and no test file.`)
+      const source = commit.files.find((file) => isSource(file.path))
+      reasons.push(`Commit ${short} changes source and no test file. Add a test file in this commit${source ? ` for ${source.path}` : ""}.`)
     }
     if (codeowners !== null) {
       const mixed = ownerAreas(commit.files, codeowners)
       if (mixed.length > 1) {
-        reasons.push(`Commit ${short} mixes owners: ${mixed.slice(0, 4).map((area) => area.owners).join(", ")}.`)
+        reasons.push(planned ? `Commit ${short} mixes owners.` : `Commit ${short} mixes owners. ${splitPlan(commit.files, codeowners, mixed)}`)
       }
     }
     if (split && codeowners !== null) {
@@ -245,16 +249,48 @@ function changedLines(files: ChangedFile[]): number {
   }, 0)
 }
 
-function ownerAreas(files: ChangedFile[], codeowners: string): { owners: string; example: string }[] {
-  const areas = new Map<string, string>()
+function ownerAreas(files: ChangedFile[], codeowners: string): { owners: string; files: string[] }[] {
+  const areas = new Map<string, string[]>()
   for (const file of files) {
     if (!isSource(file.path)) continue
     const owners = ownersFor(file.path, codeowners).slice().sort()
     if (owners.length === 0) continue
     const key = owners.join(", ")
-    if (!areas.has(key)) areas.set(key, file.path)
+    const list = areas.get(key)
+    if (list) list.push(file.path)
+    else areas.set(key, [file.path])
   }
-  return [...areas.entries()].map(([owners, example]) => ({ owners, example }))
+  return [...areas.entries()].map(([owners, paths]) => ({ owners, files: paths }))
+}
+
+function splitPlan(files: ChangedFile[], codeowners: string, areas: { owners: string; files: string[] }[]): string {
+  const groups = areas.map((area) => ({ owners: area.owners, files: [...area.files] }))
+  const loose: string[] = []
+  for (const file of files) {
+    if (isSource(file.path)) continue
+    const owners = ownersFor(file.path, codeowners).slice().sort().join(", ")
+    const group = groups.find((item) => item.owners === owners)
+    if (group) group.files.push(file.path)
+    else if (owners) loose.push(file.path)
+  }
+  const shown = groups.slice(0, 6).map((group, index) => {
+    const names = group.files.slice(0, 8).join(", ")
+    const extra = group.files.length > 8 ? `, and ${group.files.length - 8} more` : ""
+    return `${index + 1}. ${group.owners}: ${names}${extra}`
+  })
+  const rest = groups.length > 6 ? ` ${groups.length - 6} more owner groups follow the same pattern.` : ""
+  const anywhere = loose.length === 0 ? "" : ` ${loose.slice(0, 8).join(", ")}${loose.length > 8 ? `, and ${loose.length - 8} more` : ""} can go with any one of those pull requests.`
+  return `Open one pull request per owner. ${shown.join(" ")}${rest}${anywhere}`
+}
+
+function largestFiles(files: ChangedFile[]): string {
+  const ranked = files
+    .filter((file) => countsTowardLimit(file.path))
+    .map((file) => ({ path: file.path, lines: file.additions + file.deletions }))
+    .sort((left, right) => right.lines - left.lines)
+    .slice(0, 5)
+  if (ranked.length === 0) return ""
+  return ` Move the largest files into their own commits: ${ranked.map((file) => `${file.path} (${file.lines})`).join(", ")}.`
 }
 
 function isRepoPath(filePath: string): boolean {
