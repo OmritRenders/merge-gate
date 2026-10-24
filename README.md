@@ -1,27 +1,32 @@
 # Merge gate
 
-Blocks a GitHub pull request that is over the size limit, has a file without an owner, or does not have a passing test.
+Stops a pull request that is too big, has a file nobody owns, or does not have a passing test.
 
-Each commit is checked on its own. One commit cannot go over the limit, even if a later commit undoes part of it. A pull request that is still over the limit in total is allowed when every commit stays within the limit, every file in that commit has an owner, and a commit that changes code includes a test file. The test job still has to pass. A commit that only merges other commits is not counted as one of those pieces.
+A big pull request can still go through when every commit in it stays within the limit. Each commit needs an owner for its files. A commit that changes code also needs a test file. The test job still has to pass.
 
-## Setup
+## Add it
 
-1. Copy `example/merge-gate.yml` to `.github/merge-gate.yml` on the default branch. Set `testCheck` to the test job name.
-2. Add `CODEOWNERS` at `.github/CODEOWNERS`, `CODEOWNERS`, or `docs/CODEOWNERS`.
-3. Copy `example/workflow.yml` to `.github/workflows/review.yml`. If this folder is the repository root, change the action path to `uses: ./`.
-4. Require the `test` and `merge-gate` checks in branch protection, and create the `merge-gate-waive` label.
+Do this on the default branch.
 
-```bash
-npm ci
-npm run build
+1. Create `.github/merge-gate.yml`:
+
+```yaml
+ruleVersion: 1
+threshold: 400
+waiverLabel: merge-gate-waive
+testCheck: test
 ```
 
-The action entry point is `dist/src/cli.js`.
+`threshold` is how many added and deleted lines one commit may contain. `testCheck` is the name of the test job below. If you rename that job, change `testCheck` to the same name.
 
-`merge-gate-waive` drops the size limit only. The pull request author cannot add it, and neither can a bot.
+2. Create `.github/CODEOWNERS` if the repository does not have one yet. Put your GitHub name here:
 
-```html
-<!-- merge-gate-stack: abc1234 def5678 -->
+```
+* @your-github-name
 ```
 
-That note is stored with the decision. It does not raise the limit.
+3. Create `.github/workflows/review.yml`. Same file as `example/workflow.yml`. Change `npm test` to the test command this repository already uses.
+
+4. On GitHub, open the repository **Settings**, then **Branches**, then add a rule for the default branch. Require the status checks named `test` and `merge-gate`. Also create a label named `merge-gate-waive`.
+
+That label skips the size limit only. The pull request author cannot add it, and a bot cannot add it either. Owners and tests are still required.

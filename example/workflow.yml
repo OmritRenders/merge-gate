@@ -29,5 +29,4 @@ jobs:
       checks: read
       statuses: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: ./merge-gate
+      - uses: OmritRenders/merge-gate@v1.2.0
