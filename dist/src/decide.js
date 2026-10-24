@@ -137,6 +137,8 @@ function changedLines(files) {
         if (!Number.isSafeInteger(file.additions) || !Number.isSafeInteger(file.deletions) || file.additions < 0 || file.deletions < 0) {
             throw new Error(`File "${file.path}" has an invalid line count.`);
         }
+        if (!countsTowardLimit(file.path))
+            return total;
         const next = total + file.additions + file.deletions;
         if (!Number.isSafeInteger(next))
             throw new Error("The change is too large to measure safely.");
@@ -272,16 +274,23 @@ export function isTestPath(filePath) {
     return (/(^|\/)[^/]*\.(test|spec)\.[^/]+$/i.test(filePath) ||
         /(^|\/)test_[^/]+$/i.test(filePath) ||
         /(^|\/)[^/]+_test\.[^/]+$/i.test(filePath) ||
+        /(^|\/)[^/]*Test\.[^/]+$/.test(filePath) ||
+        /(^|\/)[^/]*Tests\.[^/]+$/.test(filePath) ||
+        /(^|\/)[^/]*IT\.[^/]+$/.test(filePath) ||
         /(^|\/)__tests__\//i.test(filePath) ||
-        /(^|\/)tests?\//i.test(filePath));
+        /(^|\/)tests?\//i.test(filePath) ||
+        /(^|\/)spec\//i.test(filePath));
 }
 function isSource(filePath) {
-    if (isTestPath(filePath))
+    if (isTestPath(filePath) || isGenerated(filePath))
         return false;
-    if (/\.(md|markdown|png|jpe?g|gif|svg|webp|ico)$/i.test(filePath))
-        return false;
-    if (/(^|\/)(package-lock\.json|pnpm-lock\.yaml|yarn\.lock|go\.sum|Cargo\.lock|CODEOWNERS|merge-gate\.yml)$/i.test(filePath)) {
-        return false;
-    }
-    return true;
+    return /\.(tsx?|jsx?|mjs|cjs|py|go|java|kt|kts|scala|rb|php|cs|cpp|cc|cxx|c|h|hpp|hh|swift|dart|ex|exs|lua|vue|svelte)$/i.test(filePath);
+}
+function countsTowardLimit(filePath) {
+    return !isGenerated(filePath);
+}
+function isGenerated(filePath) {
+    return (/(^|\/)(package-lock\.json|pnpm-lock\.yaml|yarn\.lock|bun\.lock|go\.sum|Cargo\.lock|poetry\.lock|composer\.lock|Gemfile\.lock|uv\.lock|packages\.lock\.json|Package\.resolved|CODEOWNERS|merge-gate\.yml)$/i.test(filePath) ||
+        /(^|\/)(vendor|node_modules|dist|coverage|generated|__snapshots__)(\/|$)/i.test(filePath) ||
+        /\.(min\.js|js\.map|d\.ts\.map|lock)$/i.test(filePath));
 }
