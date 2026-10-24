@@ -1,0 +1,4 @@
+ruleVersion: 1
+threshold: 400
+waiverLabel: merge-gate-waive
+testCheck: test

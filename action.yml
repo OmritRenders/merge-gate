@@ -1,0 +1,13 @@
+name: Merge gate
+description: Block an oversized pull request until each commit has an owner and a passing test.
+branding:
+  icon: shield
+  color: gray-dark
+outputs:
+  allowed:
+    description: true when the pull request may merge
+  record:
+    description: The decision as JSON
+runs:
+  using: node20
+  main: dist/src/cli.js
