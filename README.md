@@ -4,6 +4,16 @@ Stops a pull request that is too big, has a file nobody owns, or does not have a
 
 A big pull request can still go through when every commit in it stays within the limit. Each file needs an owner. Application code for two different owners cannot share one pull request. The report then names the files for each pull request, and names the largest files when a commit is over the limit. A commit that changes application code also needs a test file. Config, docs, infrastructure, lockfiles, and generated files do not need a new test file, and lockfiles do not count toward the size limit. The project's test job still has to pass.
 
+## How it is different
+
+A size checker looks at the finished pull request. The author can often click past it. Merge Gate measures every commit, so a later commit cannot hide a large one. The author cannot add `merge-gate-waive`. A teammate can, and that waiver skips the line limit only.
+
+GitHub CODEOWNERS asks the named people to review. The mixed pull request can still merge. Merge Gate blocks application code for two owner groups in one pull request, then lists the files that belong in each smaller one.
+
+A required test job means the tests that ran have passed. Merge Gate also blocks application code that came in with no test file. Config, docs, infrastructure, lockfiles, and generated files stay exempt.
+
+Graphite can stack the split pull requests, and a review bot can suggest the split. The original pull request stays mergeable. Merge Gate is the required check, so that pull request stays blocked until the split is real.
+
 ## Install
 
 From the repository, run:
