@@ -2,7 +2,7 @@
 
 Blocks a pull request that is too big, mixes two owners, or changes application code without a test.
 
-An agent can say to split billing and login. GitHub can still merge that pull request. Merge Gate keeps it closed. The file list comes from the owner file, so the split matches the real teams.
+AI agents can suggest splitting code, but they can't enforce it. Merge Gate blocks mixed pull requests and uses the repository's owner file to keep changes aligned with the right teams. Review is faster because each team reads only its own files.
 
 Each commit has to stay within the limit. Docs, config, infrastructure, and lockfiles do not need a new test. Lockfiles do not count toward the limit.
 
