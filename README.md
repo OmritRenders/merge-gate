@@ -19,3 +19,15 @@ One command. It adds the rule, the workflow, and an owner file when the reposito
 If the test command is wrong, change the `run` line in `.github/workflows/review.yml`.
 
 `merge-gate-waive` skips the size limit only. The author cannot add it, and a bot cannot add it either.
+
+## Working on merge gate
+
+`dist/` is committed and the action runs from it, so build before you commit:
+
+```bash
+npm ci
+npm run build
+npm run check:dist
+```
+
+`npm run check:dist` fails when `dist/` does not match `src/`, and CI runs it on every pull request.

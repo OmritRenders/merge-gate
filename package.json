@@ -14,7 +14,8 @@
     "node": ">=20"
   },
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "check:dist": "node scripts/check-dist.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",
